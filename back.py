@@ -217,3 +217,9 @@ def visualizar(values, db, titulos):
         result = cursor.fetchall()[0]
         sg.Print(f"\t\t\t{str(result[0]).title()}", "_" * 80, f"\n\t{str(result[1]).capitalize()}",
                  font='arial 11')
+
+
+def sobre():
+    sg.popup('Com este programa você poderá fazer um cadastro para '
+             'poder logar na sua conta e escrever algo sobre seu '
+             'dia e poderá também ver as suas anotações.', title='Sobre', font=FONTE)
