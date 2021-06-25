@@ -28,10 +28,10 @@ if not back.existe_banco(DB):
 
 sg.theme('tan')
 
-window = diario.primeira_tela()
+wInicial, wCadastro, wLogin, wArea_usuario, wEscrever, wLer = diario.primeira_tela(), None, None, None, None, None
 
 while True:
-   event, values = window.read()
+    window, event, values = sg.read_all_windows()
 
     # Fechar programa
     if (event == sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event == "Sair" or event == sg.WIN_CLOSED) and back.saida():
@@ -39,35 +39,55 @@ while True:
 
     # Sobre o programa
     elif event == 'Sobre':
-        sg.popup('Com este programa você poderá fazer um cadastro para '
-                 'poder logar na sua conta e escrever algo sobre seu '
-                 'dia e poderá também ver as suas anotações.', font=back.FONTE) # Transferir para o arquivo back
+        back.sobre()
 
     # Tela de cadastro
     elif event == 'Cadastro':
-        window.close()
-        tela, window = diario.cadastro()
+        if window == wInicial:
+            wInicial.hide()
+        elif window == wLogin:
+            wLogin.hide()
+
+        if not wCadastro:
+            wCadastro = diario.cadastro()
+        else:
+            wCadastro.un_hide()
 
     # Tela de login
     elif event == 'Login':
-        window.close()
-        tela, window = diario.login()
+        if window == wInicial:
+            wInicial.hide()
+        elif window == wCadastro:
+            wCadastro.hide()
+
+        if not wLogin:
+            wLogin = diario.login()
+        else:
+            wLogin.un_hide()
+
+    # Logar em uma conta
+    elif event == 'Entrar':
+        existe, id_user, nome = back.login(values, DB)
+        if existe:
+            wLogin.hide()
+            wLogin.find_element('-LOG_NOME-').Update('')
+            wLogin.find_element('-LOG_SENHA-').Update('')
+            wArea_usuario = diario.area_usuario(nome)
 
     # Tela onde escreve mensagem
     elif event == 'Escrever':
-        window.close()
-        tela, window = diario.escrever()
+        wArea_usuario.hide()
+        wEscrever = diario.escrever()
+
+    # Botão ler da área do usuário
+    elif event == 'Ler':
+        lista, titulos = back.ler(DB, id_user)
+        wArea_usuario.hide()
+        wLer = diario.ler(lista)
 
     # Cadastrar o usuário no banco de dados
     elif event == 'Cadastrar':
         back.cadastrar(values, DB)
-
-    # Logar em uma conta
-    elif event == 'Entrar':
-       existe, id_user, nome = back.login(values, DB)
-       if existe:
-           window.close()
-           tela, window = diario.area_usuario(nome)
 
     # Salvar mensagem no banco de dados
     elif event == 'Salvar':
@@ -77,21 +97,23 @@ while True:
             window.find_element('-TEXTO-').Update('')
 
     # Voltar pra área do usuário
-    elif event == 'Voltar' and tela == 'escrever' or event == "Voltar" and tela == "ler":
-        window.close()
-        tela, window = diario.area_usuario(nome)
+    elif window == wEscrever and event == 'Voltar':
+        wEscrever.hide()
+        wArea_usuario.un_hide()
+
+    elif window == wLer and event == "Voltar":
+        wLer.hide()
+        wArea_usuario.un_hide()
 
     # Voltar pra tela principal
-    elif event == 'Voltar' and tela == 'area_usuario':
-        window.close()
-        tela, window = diario.primeira_tela()
-        id = nome = None
-
-    # Botão ler da área do usuário
-    elif event == 'Ler':
-        lista, titulos = back.ler(DB, id_user)
-        window.close()
-        tela, window = diario.ler(lista)
+    elif window == wArea_usuario and event == 'Voltar':
+        if wLer:
+            wLer.close()
+        if wEscrever:
+            wEscrever.close()
+        wArea_usuario.close()
+        wInicial.un_hide()
+        id_user = nome = None
 
     # Botão visualizar da tela ler
     elif event == "Visualizar":
@@ -123,5 +145,3 @@ while True:
         else:
             window.close()
             tela, window = muda_tema(tela, 'Python')
-
-window.close()
